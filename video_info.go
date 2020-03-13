@@ -7,6 +7,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"math"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -109,6 +110,22 @@ func (info *VideoInfo) GetThumbnailURL(quality ThumbnailQuality) *url.URL {
 	return u
 }
 
+type downProgress struct {
+	Total     uint64
+	TotalSize float64
+}
+
+func (dp *downProgress) Write(p []byte) (int, error) {
+	n := len(p)
+	dp.Total += uint64(n)
+	byteToMb := float64(1024 * 1024)
+	totalFloat := float64(dp.Total)
+	progress := math.Ceil((totalFloat / dp.TotalSize) * 100)
+	fmt.Printf("\r%s", strings.Repeat(" ", 35))
+	fmt.Printf("\rTotal Size: %.2f MB, Downloading... %.2f MB, Progress: %%%.0f ", dp.TotalSize/byteToMb, totalFloat/byteToMb, progress)
+	return n, nil
+}
+
 // Download is a convenience method to download a format to an io.Writer
 func (c *Client) Download(info *VideoInfo, format *Format, dest io.Writer) error {
 	u, err := c.GetDownloadURL(info, format)
@@ -122,7 +139,18 @@ func (c *Client) Download(info *VideoInfo, format *Format, dest io.Writer) error
 	}
 
 	defer resp.Body.Close()
-	_, err = io.Copy(dest, resp.Body)
+
+	fileSize, err := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 32)
+	if err != nil {
+		return err
+	}
+	counter := &downProgress{TotalSize: float64(fileSize)}
+	_, err = io.Copy(dest, io.TeeReader(resp.Body, counter))
+	if err != nil {
+		return err
+	}
+
+	//_, err = io.Copy(dest, resp.Body)
 	return err
 }
 
