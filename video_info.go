@@ -122,7 +122,7 @@ func (dp *downProgress) Write(p []byte) (int, error) {
 	totalFloat := float64(dp.Total)
 	progress := math.Ceil((totalFloat / dp.TotalSize) * 100)
 	fmt.Printf("\r%s", strings.Repeat(" ", 35))
-	fmt.Printf("\rTotal Size: %.2f MB, Downloading... %.2f MB, Progress: %%%.0f ", dp.TotalSize/byteToMb, totalFloat/byteToMb, progress)
+	fmt.Printf("\rTotal Size: %.2f MB, Downloading... %.2f MB, Progress: %%%.0f \r", dp.TotalSize/byteToMb, totalFloat/byteToMb, progress)
 	return n, nil
 }
 
