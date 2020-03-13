@@ -144,7 +144,8 @@ func (c *Client) Download(info *VideoInfo, format *Format, dest io.Writer) error
 	if err != nil {
 		return err
 	}
-	counter := &downProgress{TotalSize: float64(fileSize)}
+	counter := new(downProgress)
+	counter.TotalSize = float64(fileSize)
 	_, err = io.Copy(dest, io.TeeReader(resp.Body, counter))
 	if err != nil {
 		return err
